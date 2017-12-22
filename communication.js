@@ -15,10 +15,16 @@ class Communication extends CommunicationInterface {
     });
     mqttClient.subscribe(params.mqtt.TOPIC_OUTPUT);
     mqttClient.on('message', (topic, message) => {
-      if (opt && opt.debug) console.log('[MQTT] message recv', topic, '=>', message.toString());
+      const strMessage = message.toString();
+      if (opt && opt.debug) console.log('[MQTT] message recv', topic, '=>', strMessage);
+
       switch (topic) {
         case params.mqtt.TOPIC_OUTPUT:
-          this._heatingStateUpdate((message === '1' || message === 1));
+          let status = false;
+          if (strMessage === '1' || strMessage === 1) status = true;
+          else if (strMessage === '0' || strMessage === 0) status = false;
+          else throw new Error('Invalid message received on output topic');
+          this._heatingStateUpdate(status);
           break;
         default:
       }
