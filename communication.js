@@ -3,10 +3,18 @@ const mqtt = require('mqtt');
 const params = require('./parameters.js');
 const fs = require('fs');
 const path = require('path');
+const mysql = require('mysql');
 
 class Communication extends CommunicationInterface {
   constructor(opt) {
     super();
+    this.setupMqtt(opt);
+    this.setupMysql(opt);
+
+    this._lastTempTimestamp = null;
+  }
+
+  setupMqtt(opt) {
     const mqttClient = mqtt.connect(params.mqtt.SERVER, {
       username: params.mqtt.USER,
       password: params.mqtt.PASSWORD,
@@ -30,9 +38,18 @@ class Communication extends CommunicationInterface {
       }
     });
     this.mqttClient = mqttClient;
-    this._lastTempTimestamp = null;
   }
 
+  setupMysql() {
+    const mysqlConnection = mysql.createConnection({
+      host: params.mysql.SERVER,
+      user: params.mysql.USER,
+      password: params.mysql.PASSWORD,
+      database: params.mysql.DATABASE,
+    });
+    mysqlConnection.connect();
+    this.mysqlConnection = mysqlConnection;
+  }
 
   requestTemp() {
     const data = fs.readFileSync(path.join(__dirname, '/temp-reading/dht22/temp'), 'utf8');
@@ -74,7 +91,29 @@ class Communication extends CommunicationInterface {
         if (err) console.warn(err, 'Failed to save log');
       },
     );
+    this.mysqlConnection.query(
+      `INSERT INTO ${params.mysql.STATE_TABLE} ` +
+      '(currentTemperature, desiredTemperature, heatingOn, lastTemperatureUpdate, currentTemperatureProgramName, someoneIsHome)' +
+      'VALUES (?, ?, ?, ?, ?, ?)',
+      [
+        state.currentTemperature,
+        state.desiredTemperature,
+        state.heatingOn,
+        state.lastTemperatureUpdate.toString(),
+        state.currentTemperatureProgramName,
+        state.someoneIsHome,
+      ],
+    );
   }
+
+  /**
+  * @IMPLEMENT
+  */
+  logError(title, error) {
+    // maybe implement this
+    console.warn(title, error);
+  }
+
 
   // UTILS
   static prettyDate(date) {
