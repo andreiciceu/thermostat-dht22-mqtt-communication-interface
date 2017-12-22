@@ -15,4 +15,7 @@ module.exports = {
     DATABASE: 'thermostat',
     STATE_TABLE: 'temperatures',
   },
+  log: {
+    logInterval: (60 * 3) - 5, // seconds
+  }
 };

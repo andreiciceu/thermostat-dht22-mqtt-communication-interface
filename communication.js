@@ -85,8 +85,12 @@ class Communication extends CommunicationInterface {
   }
 
   logState(state) {
+    if (!this.lastLogDate || Date.now() - this.lastLogDate < params.minLogInterval) {
+      return false;
+    }
+    this.lastLogDate = Date.now();
     fs.appendFile(
-      path.join(__dirname, '../../var/logs/state.log'), `${Communication.prettyDate()}] dTemp: ${state.desiredTemp}, cTemp: ${state.cTemp} (${Communication.prettyDate(state.lastTempUpdate)}) | heatingOn: ${state.heatingOn}, someoneIsHome: ${state.someoneIsHome}\n`,
+      path.join(__dirname, '../../var/logs/state.log'), `${Communication.prettyDate()}] dTemp: ${state.desiredTemperature}, cTemp: ${state.currentTemperature} (${Communication.prettyDate(state.lastTemperatureUpdate)}) | heatingOn: ${state.heatingOn}, someoneIsHome: ${state.someoneIsHome}\n`,
       (err) => {
         if (err) console.warn(err, 'Failed to save log');
       },
@@ -99,11 +103,12 @@ class Communication extends CommunicationInterface {
         state.currentTemperature,
         state.desiredTemperature,
         state.heatingOn,
-        state.lastTemperatureUpdate.toString(),
+        Communication.prettyDate(state.lastTemperatureUpdate),
         state.currentTemperatureProgramName,
         state.someoneIsHome,
       ],
     );
+    return true;
   }
 
   /**

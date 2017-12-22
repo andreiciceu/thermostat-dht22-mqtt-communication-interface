@@ -7,7 +7,7 @@ Check out `temp-reading\dhtXX\readme.md` for details on specific implementation
 ## Logging
 Logging into mysql database provided in `parameters.js`
 ```SQL
-CREATE TABLE thermostat (
+CREATE TABLE state (
   id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
   timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   currentTemperature FLOAT,
