@@ -29,7 +29,7 @@ class Communication extends CommunicationInterface {
 
 
   requestTemp() {
-    const data = fs.readFileSync('temp-reading/dht22/temp', 'utf8');
+    const data = fs.readFileSync(path.join(__dirname, '/temp-reading/dht22/temp'), 'utf8');
     const lines = data.split('\n');
     if (lines.length < 2) return false;
 
@@ -37,7 +37,7 @@ class Communication extends CommunicationInterface {
     if (this._lastTempTimestamp === timestamp) return false;
 
     const regex = /Temperature = (\d*.\d*)/;
-    let temp = regex.exec(lines[lines.length - 1]);
+    let temp = regex.exec(lines[1]);
     if (!temp || !temp.length || temp.length < 2) return false;
 
     temp = parseFloat(temp[1]);
@@ -63,7 +63,7 @@ class Communication extends CommunicationInterface {
 
   logState(state) {
     fs.appendFile(
-      path.join(__dirname, '/../var/logs/state.log'), `${Communication.prettyDate()}] dTemp: ${state.desiredTemp}, cTemp: ${state.cTemp} (${Communication.prettyDate(state.lastTempUpdate)}) | heatingOn: ${state.heatingOn}, someoneIsHome: ${state.someoneIsHome}\n`,
+      path.join(__dirname, '../../var/logs/state.log'), `${Communication.prettyDate()}] dTemp: ${state.desiredTemp}, cTemp: ${state.cTemp} (${Communication.prettyDate(state.lastTempUpdate)}) | heatingOn: ${state.heatingOn}, someoneIsHome: ${state.someoneIsHome}\n`,
       (err) => {
         if (err) console.warn(err, 'Failed to save log');
       },
