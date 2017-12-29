@@ -17,5 +17,5 @@ module.exports = {
   },
   log: {
     logInterval: (60 * 3) - 5, // seconds
-  }
+  },
 };

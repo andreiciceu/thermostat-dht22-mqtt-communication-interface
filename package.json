@@ -9,6 +9,7 @@
   "author": "Andrei Ciceu",
   "license": "ISC",
   "dependencies": {
-    "mqtt": "^2.15.0"
+    "mqtt": "^2.15.0",
+    "mysql": "^2.15.0"
   }
 }

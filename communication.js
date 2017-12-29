@@ -85,7 +85,7 @@ class Communication extends CommunicationInterface {
   }
 
   logState(state) {
-    if (!this.lastLogDate || Date.now() - this.lastLogDate < params.minLogInterval) {
+    if (this.lastLogDate && (Date.now() - this.lastLogDate < params.minLogInterval)) {
       return false;
     }
     this.lastLogDate = Date.now();
