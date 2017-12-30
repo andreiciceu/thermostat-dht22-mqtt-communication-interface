@@ -1,6 +1,7 @@
+require('dotenv').config();
 const CommunicationInterface = require('../../CommunicationInterface');
 const mqtt = require('mqtt');
-const params = require('./parameters.js');
+const config = require('./config.js');
 const fs = require('fs');
 const path = require('path');
 const mysql = require('mysql');
@@ -15,23 +16,23 @@ class Communication extends CommunicationInterface {
   }
 
   setupMqtt(opt) {
-    const mqttClient = mqtt.connect(params.mqtt.SERVER, {
-      username: params.mqtt.USER,
-      password: params.mqtt.PASSWORD,
+    const mqttClient = mqtt.connect(process.env.MQTT_HOST, {
+      username: process.env.MQTT_USER,
+      password: process.env.MQTT_PASSWORD,
       keepalive: 0,
       protocol: 'MQTT',
     });
-    mqttClient.subscribe(params.mqtt.TOPIC_OUTPUT);
+    mqttClient.subscribe(config.mqtt.TOPICS.HEATING_OUTPUT);
     mqttClient.on('message', (topic, message) => {
       const strMessage = message.toString();
       if (opt && opt.debug) console.log('[MQTT] message recv', topic, '=>', strMessage);
 
       switch (topic) {
-        case params.mqtt.TOPIC_OUTPUT:
+        case config.mqtt.TOPICS.HEATING_OUTPUT:
           let status = false;
           if (strMessage === '1' || strMessage === 1) status = true;
           else if (strMessage === '0' || strMessage === 0) status = false;
-          else throw new Error('Invalid message received on output topic');
+          else throw new Error('Invalid message received on heating output topic');
           this._heatingStateUpdate(status);
           break;
         default:
@@ -42,10 +43,10 @@ class Communication extends CommunicationInterface {
 
   setupMysql() {
     const mysqlConnection = mysql.createConnection({
-      host: params.mysql.SERVER,
-      user: params.mysql.USER,
-      password: params.mysql.PASSWORD,
-      database: params.mysql.DATABASE,
+      host: process.env.MYSQL_HOST,
+      user: process.env.MYSQL_USER,
+      password: process.env.MYSQL_PASSWORD,
+      database: process.env.MYSQL_DATABASE,
     });
     mysqlConnection.connect();
     this.mysqlConnection = mysqlConnection;
@@ -72,11 +73,11 @@ class Communication extends CommunicationInterface {
 
   // Heating
   requestHeatingState() {
-    this.mqttClient.publish(params.mqtt.TOPIC_INPUT, 'status');
+    this.mqttClient.publish(config.mqtt.TOPICS.HEATING_INPUT, 'status');
   }
 
   toggleHeating(state) {
-    this.mqttClient.publish(params.mqtt.TOPIC_INPUT, state ? 'on' : 'off');
+    this.mqttClient.publish(config.mqtt.TOPICS.HEATING_INPUT, state ? 'on' : 'off');
   }
 
   requestSomeoneIsHome() {
@@ -85,7 +86,10 @@ class Communication extends CommunicationInterface {
   }
 
   logState(state) {
-    if (this.lastLogDate && (Date.now() - this.lastLogDate < params.minLogInterval)) {
+    this.mqttClient.publish(config.mqtt.TOPICS.TEMPERATURE_OUTPUT,
+      state.currentTemperature.toString()
+    );
+    if (this.lastLogDate && (Date.now() - this.lastLogDate < config.minLogInterval)) {
       return false;
     }
     this.lastLogDate = Date.now();
@@ -96,7 +100,7 @@ class Communication extends CommunicationInterface {
       },
     );
     this.mysqlConnection.query(
-      `INSERT INTO ${params.mysql.STATE_TABLE} ` +
+      `INSERT INTO ${process.env.MYSQL_STATE_TABLE} ` +
       '(currentTemperature, desiredTemperature, heatingOn, lastTemperatureUpdate, currentTemperatureProgramName, someoneIsHome)' +
       'VALUES (?, ?, ?, ?, ?, ?)',
       [
@@ -111,12 +115,13 @@ class Communication extends CommunicationInterface {
     return true;
   }
 
-  /**
-  * @IMPLEMENT
-  */
   logError(title, error) {
-    // maybe implement this
     console.warn(title, error);
+  }
+
+  closeConnections() {
+    this.mqttClient.end();
+    this.mysqlConnection.end();
   }
 
 

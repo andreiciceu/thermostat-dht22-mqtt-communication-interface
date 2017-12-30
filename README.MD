@@ -3,9 +3,11 @@ DHT22 reading from RaspberryPI/Odroid and MQTT toggled relay
 
 Check out `temp-reading\dhtXX\readme.md` for details on specific implementation
 
+# Installation
+Create `.env` file according to `.env.example`
 
 ## Logging
-Logging into mysql database provided in `parameters.js`
+Logging into mysql database provided in `.env`
 ```SQL
 CREATE TABLE state (
   id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
