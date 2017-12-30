@@ -86,8 +86,9 @@ class Communication extends CommunicationInterface {
   }
 
   logState(state) {
-    this.mqttClient.publish(config.mqtt.TOPICS.TEMPERATURE_OUTPUT,
-      state.currentTemperature.toString()
+    this.mqttClient.publish(
+      config.mqtt.TOPICS.TEMPERATURE_OUTPUT,
+      state.currentTemperature.toString(),
     );
     if (this.lastLogDate && (Date.now() - this.lastLogDate < config.minLogInterval)) {
       return false;
